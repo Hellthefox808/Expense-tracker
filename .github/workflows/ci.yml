@@ -29,7 +29,7 @@ jobs:
         cache: 'npm'
 
     - name: Start MongoDB ${{ matrix.mongodb-version }}
-      uses: supercharge/mongodb-github-action@1.10.0
+      uses: supercharge/mongodb-github-action@1.12.1
       with:
         mongodb-version: ${{ matrix.mongodb-version }}
 
