@@ -1,4 +1,4 @@
-# 💎 Ravi's Expense Tracker
+# Ravi's Expense Tracker
 
 [![CI Pipeline](https://github.com/Hellthefox808/Expense-tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/Hellthefox808/Expense-tracker/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -9,7 +9,7 @@ A high-performance, secure, and premium financial management dashboard engineere
 
 ---
 
-## 🏛️ System Architecture
+## System Architecture
 
 The project is structured according to the classic Model-View-Controller (MVC) pattern, supplemented with dedicated middleware layers for input validation, security enforcement, and global exception boundaries.
 
@@ -27,14 +27,14 @@ graph TD
 
 ---
 
-## ✨ Design & Aesthetic Highlights
+## Design & Aesthetic Highlights
 
-### 🎨 Glassmorphic Interface & Holographic Tilt
+### Glassmorphic Interface & Holographic Tilt
 The user interface implements premium glassmorphic UI elements using customized CSS backdrop filters:
 *   **3D Perspective Tilt:** The container elements leverage CSS 3D perspectives (`perspective: 1200px` and `transform-style: preserve-3d`) to tilt dynamically matching mouse movements.
 *   **Iridescent Reflex Overlay:** Uses a `radial-gradient` that tracks the cursor coordinates to generate interactive lighting and reflection overlays on cards.
 
-### 🌊 Ethereal Shadows SVG Displacement
+### Ethereal Shadows SVG Displacement
 Background fluid motions are generated dynamically using an SVG displacement filter, avoiding heavy video assets:
 ```xml
 <filter id="ethereal-displacement">
@@ -45,7 +45,7 @@ Background fluid motions are generated dynamically using an SVG displacement fil
 
 ---
 
-## 💾 Database Schema & Optimization
+## Database Schema & Optimization
 
 The database is built on MongoDB via Mongoose. Data fields are configured with strict validations and indexing:
 
@@ -79,7 +79,7 @@ const stats = await Expense.aggregate([
 
 ---
 
-## 🛡️ Security & Input Validation
+## Security & Input Validation
 
 The system implements security-in-depth across both middleware and network layers:
 1.  **Content Security Policy (CSP):** Configured via [Helmet](file:///c:/Users/ravir/Desktop/PROJECT/p1/expense%20tracker/server.js#L18-L49) to allow only trusted resources from Tailwind and JSDelivr CDNs.
@@ -89,7 +89,7 @@ The system implements security-in-depth across both middleware and network layer
 
 ---
 
-## 🔌 API Documentation
+## API Documentation
 
 | Endpoint | Method | Payload / Query Params | Description |
 |---|---|---|---|
@@ -99,7 +99,7 @@ The system implements security-in-depth across both middleware and network layer
 
 ---
 
-## 📂 Repository Layout
+## Repository Layout
 
 *   [.github/](file:///c:/Users/ravir/Desktop/PROJECT/p1/expense%20tracker/.github/) - GitHub workflows (CI setup) and issue templates
 *   [config/db.js](file:///c:/Users/ravir/Desktop/PROJECT/p1/expense%20tracker/config/db.js) - MongoDB connection helper using Mongoose
@@ -114,7 +114,7 @@ The system implements security-in-depth across both middleware and network layer
 
 ---
 
-## 🚀 Quick Start & Deployment
+## Quick Start & Deployment
 
 ### 1. Prerequisites
 *   Node.js (v18.x or above)
@@ -156,7 +156,7 @@ docker-compose down
 
 ---
 
-## 🧪 Testing Suite
+## Testing Suite
 
 Automated integration tests are implemented with Jest and Supertest.
 ```bash
@@ -171,6 +171,6 @@ The test suite validates:
 
 ---
 
-## 👤 Author
+## Author
 
 **Ravi Ranjan Singh** - [GitHub Profile](https://github.com/ravir)
