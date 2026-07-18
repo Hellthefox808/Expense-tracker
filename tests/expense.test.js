@@ -231,4 +231,70 @@ describe('Expense Tracker Test Suite', () => {
 
     });
 
+    describe('PUT /edit/:id - Edit Transaction', () => {
+
+        it('should update existing transaction and redirect to / on success', async () => {
+            const exp = await Expense.create({
+                description: 'Snacks',
+                amount: 50,
+                category: 'Food'
+            });
+
+            const res = await request(app)
+                .put(`/edit/${exp._id}`)
+                .send({
+                    description: 'Healthy Snacks',
+                    amount: '120.50',
+                    category: 'Food'
+                })
+                .expect(302);
+
+            expect(res.headers.location).toBe('/');
+            
+            const updated = await Expense.findById(exp._id);
+            expect(updated.description).toBe('Healthy Snacks');
+            expect(updated.amount).toBe(120.50);
+            expect(updated.category).toBe('Food');
+        });
+
+        it('should return 400 Bad Request and list errors on invalid payload', async () => {
+            const exp = await Expense.create({
+                description: 'Notebook',
+                amount: 80,
+                category: 'Education'
+            });
+
+            const res = await request(app)
+                .put(`/edit/${exp._id}`)
+                .send({
+                    description: '',
+                    amount: '0',
+                    category: 'InvalidCategory'
+                })
+                .expect(400);
+
+            expect(res.text).toContain('Please correct the following errors:');
+            expect(res.text).toContain('Description is required.');
+            expect(res.text).toContain('Amount must be at least ₹0.01.');
+            expect(res.text).toContain('Invalid category specified.');
+            
+            const unchanged = await Expense.findById(exp._id);
+            expect(unchanged.description).toBe('Notebook');
+            expect(unchanged.amount).toBe(80);
+        });
+
+        it('should return 404 for non-existent transaction ids', async () => {
+            const validFakeId = new mongoose.Types.ObjectId();
+            await request(app)
+                .put(`/edit/${validFakeId}`)
+                .send({
+                    description: 'Books',
+                    amount: '400',
+                    category: 'Education'
+                })
+                .expect(404);
+        });
+
+    });
+
 });

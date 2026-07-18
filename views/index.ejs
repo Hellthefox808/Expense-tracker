@@ -643,11 +643,20 @@
                                     </div>
                                     <div class="flex items-center gap-4 shrink-0">
                                         <span class="font-black text-slate-100 text-sm">₹<%= expense.amount %></span>
-                                        <form action="/delete/<%= expense._id %>?_method=DELETE" method="POST" class="inline">
-                                            <button type="submit" class="btn-delete-3d text-slate-500 hover:text-rose-500 font-black text-xs p-1.5 bg-slate-950/40 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/20 rounded-lg transition-all duration-200" aria-label="Delete outflow: <%= expense.description %>">
-                                                ✕
+                                        <div class="flex items-center gap-2">
+                                            <!-- Edit Action -->
+                                            <button onclick="openEditModal('<%= expense._id %>', '<%= expense.description.replace(/'/g, "\\'") %>', <%= expense.amount %>, '<%= expense.category %>')" 
+                                                    class="btn-delete-3d text-slate-500 hover:text-purple-400 font-black text-xs p-1.5 bg-slate-950/40 hover:bg-purple-500/10 border border-slate-800 hover:border-purple-500/20 rounded-lg transition-all duration-200" 
+                                                    aria-label="Edit outflow: <%= expense.description %>">
+                                                ✏️
                                             </button>
-                                        </form>
+                                            <!-- Delete Action -->
+                                            <form action="/delete/<%= expense._id %>?_method=DELETE" method="POST" class="inline">
+                                                <button type="submit" class="btn-delete-3d text-slate-500 hover:text-rose-500 font-black text-xs p-1.5 bg-slate-950/40 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/20 rounded-lg transition-all duration-200" aria-label="Delete outflow: <%= expense.description %>">
+                                                    ✕
+                                                </button>
+                                            </form>
+                                        </div>
                                     </div>
                                 </div>
                             <% }) %>
@@ -696,6 +705,50 @@
                     Delete
                 </button>
             </div>
+        </div>
+    </div>
+
+    <!-- Modern 3D Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center z-50 p-4 transition-all duration-300" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+        <div class="card-3d max-w-sm w-full p-8 animate-[scaleUp_0.2s_ease-out]" data-tilt>
+            <h4 id="editModalTitle" class="text-xl font-black text-slate-100 mb-6 border-b border-slate-800/40 pb-3 depth-title">Edit Outflow</h4>
+            <form id="editExpenseForm" action="" method="POST" class="space-y-5 depth-content text-left">
+                <!-- Description Input -->
+                <div>
+                    <label for="editDescriptionInput" class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Description</label>
+                    <input type="text" id="editDescriptionInput" name="description" required 
+                           class="w-full p-3 input-3d text-sm font-medium">
+                </div>
+
+                <!-- Amount Input -->
+                <div>
+                    <label for="editAmountInput" class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Amount (₹)</label>
+                    <input type="number" id="editAmountInput" name="amount" min="0.01" step="0.01" required 
+                           class="w-full p-3 input-3d text-sm font-semibold text-slate-100">
+                </div>
+
+                <!-- Category Input selection -->
+                <div>
+                    <label for="editCategorySelect" class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Category</label>
+                    <select id="editCategorySelect" name="category" required 
+                            class="w-full p-3 input-3d text-sm font-semibold text-slate-100 bg-slate-950">
+                        <option value="Food">🍕 Food</option>
+                        <option value="Education">🎓 Education</option>
+                        <option value="Technology">💻 Technology</option>
+                        <option value="Entertainment">🍿 Entertainment</option>
+                        <option value="Other">🏷️ Other</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="button" id="cancelEdit" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-sm transition-all duration-200 active:scale-95">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 btn-3d text-white font-semibold py-2.5 rounded-xl text-sm transition-all duration-200">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -963,10 +1016,46 @@
             }
         });
 
-        // Close modal on Escape keypress
+        // Edit Modal Handler Setup
+        const editModal = document.getElementById('editModal');
+        const cancelEditBtn = document.getElementById('cancelEdit');
+        const editExpenseForm = document.getElementById('editExpenseForm');
+        const editDescriptionInput = document.getElementById('editDescriptionInput');
+        const editAmountInput = document.getElementById('editAmountInput');
+        const editCategorySelect = document.getElementById('editCategorySelect');
+
+        window.openEditModal = (id, description, amount, category) => {
+            lastFocusedElement = document.activeElement;
+            editExpenseForm.action = `/edit/${id}?_method=PUT`;
+            editDescriptionInput.value = description;
+            editAmountInput.value = amount;
+            editCategorySelect.value = category;
+
+            editModal.classList.remove('hidden');
+            editModal.classList.add('flex');
+            editDescriptionInput.focus();
+        };
+
+        const closeEditModal = () => {
+            editModal.classList.add('hidden');
+            editModal.classList.remove('flex');
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+                lastFocusedElement = null;
+            }
+        };
+
+        cancelEditBtn.addEventListener('click', closeEditModal);
+
+        // Close modals on Escape keypress
         document.addEventListener('keydown', e => {
-            if (e.key === 'Escape' && !deleteModal.classList.contains('hidden')) {
-                closeModal();
+            if (e.key === 'Escape') {
+                if (!deleteModal.classList.contains('hidden')) {
+                    closeModal();
+                }
+                if (!editModal.classList.contains('hidden')) {
+                    closeEditModal();
+                }
             }
         });
 

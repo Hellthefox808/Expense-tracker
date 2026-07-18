@@ -45,3 +45,22 @@ Removes an existing transaction item from the database.
   - **Code:** `302 Found` (Redirects to `/`)
 - **Error Response:**
   - **Code:** `404 Not Found` (If transaction id does not exist)
+
+---
+
+## 4. Edit Transaction
+Validates input parameters and updates an existing transaction item in the database.
+
+- **URL:** `/edit/:id`
+- **Method:** `PUT`
+- **URL Parameters:**
+  - `id` (required): Hexadecimal MongoDB ObjectId.
+- **Request Body (form-urlencoded / JSON):**
+  - `description` (required): Name of expense (1 - 100 chars).
+  - `amount` (required): Outflow value (number >= 0.01).
+  - `category` (required): Class (must be one of: `Food`, `Education`, `Technology`, `Entertainment`, `Other`).
+- **Success Response:**
+  - **Code:** `302 Found` (Redirects to `/`)
+- **Error Response:**
+  - **Code:** `400 Bad Request` (If validation fails)
+  - **Code:** `404 Not Found` (If transaction id does not exist)

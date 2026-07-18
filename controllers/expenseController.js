@@ -120,3 +120,38 @@ exports.deleteExpense = async (req, res, next) => {
         next(err);
     }
 };
+
+// PUT: Edit existing expense
+exports.editExpense = async (req, res, next) => {
+    try {
+        // If validation middleware found errors
+        if (req.validationErrors) {
+            const dashboardData = await getDashboardData(req);
+            return res.status(400).render('index', {
+                ...dashboardData,
+                errors: req.validationErrors
+            });
+        }
+
+        const { description, amount, category } = req.body;
+        const expense = await Expense.findByIdAndUpdate(
+            req.params.id,
+            {
+                description: description.trim(),
+                amount: Number(amount),
+                category
+            },
+            { new: true, runValidators: true }
+        );
+
+        if (!expense) {
+            const error = new Error('Expense not found');
+            error.statusCode = 404;
+            throw error;
+        }
+
+        res.redirect('/');
+    } catch (err) {
+        next(err);
+    }
+};
