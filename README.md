@@ -141,4 +141,4 @@ Distributed under the MIT License. See [LICENSE](LICENSE) for more details.
 
 ## 👤 Author
 
-**Ravi** - [GitHub Profile](https://github.com/ravir)
+**Ravi Ranjan Singh** - [GitHub Profile](https://github.com/ravir)
