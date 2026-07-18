@@ -1,0 +1,1095 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ravi's Expense Tracker</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800;900&display=swap');
+
+        :root {
+            --angle-x: 0deg;
+            --angle-y: 0deg;
+            --light-x: 50%;
+            --light-y: 50%;
+        }
+
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: radial-gradient(circle at var(--light-x) var(--light-y), #1e1b4b 0%, #0f172a 40%, #020617 100%);
+            perspective: 1200px;
+            overflow-x: hidden;
+            min-height: 100vh;
+            transition: background 0.1s ease-out;
+        }
+
+        /* 3D Glassmorphism Cards with Holographic Light Illusion */
+        .card-3d {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            transform-style: preserve-3d;
+            transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+        }
+
+        /* Iridescent / Illusion reflection layer */
+        .card-3d::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(
+                800px circle at var(--mouse-x, 0px) var(--mouse-y, 0px),
+                rgba(255, 255, 255, 0.06),
+                transparent 40%
+            ), linear-gradient(
+                135deg,
+                rgba(255, 0, 128, 0.05) 0%,
+                rgba(0, 255, 255, 0.05) 50%,
+                rgba(255, 255, 0, 0.05) 100%
+            );
+            pointer-events: none;
+            z-index: 1;
+            mix-blend-mode: color-dodge;
+            transition: opacity 0.5s ease;
+        }
+
+        .card-3d:hover {
+            box-shadow: 
+                0 35px 60px -15px rgba(0, 0, 0, 0.7),
+                0 0 40px rgba(139, 92, 246, 0.15);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        /* Depth layers */
+        .depth-title {
+            transform: translateZ(60px);
+            text-shadow: 0 10px 20px rgba(0, 0, 0, 0.4);
+        }
+
+        .depth-content {
+            transform: translateZ(35px);
+        }
+
+        /* Tactile 3D Buttons with Chameleon Gradients */
+        .btn-3d {
+            position: relative;
+            background-image: linear-gradient(135deg, rgba(236, 72, 153, 0.85) 0%, rgba(139, 92, 246, 0.85) 50%, rgba(59, 130, 246, 0.85) 100%), url('/images/button-bg.png');
+            background-size: cover;
+            background-position: center;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 12px;
+            color: white;
+            font-weight: 600;
+            box-shadow: 
+                 0 4px 0 #4c1d95,
+                 0 8px 25px rgba(139, 92, 246, 0.4);
+             transition: all 0.2s ease, transform 0.1s ease;
+             transform: translateZ(25px);
+         }
+ 
+         .btn-3d:hover {
+             transform: translateZ(35px) scale(1.05);
+             box-shadow: 
+                 0 6px 0 #4c1d95,
+                 0 15px 35px rgba(236, 72, 153, 0.6);
+             border-color: rgba(255, 255, 255, 0.3);
+         }
+ 
+         .btn-3d:active {
+             transform: translateZ(25px) translateY(4px);
+             box-shadow: 
+                 0 0px 0 #4c1d95,
+                 0 4px 15px rgba(139, 92, 246, 0.3);
+         }
+ 
+         .btn-3d:focus-visible {
+             outline: 3px solid #f43f5e;
+             outline-offset: 4px;
+         }
+ 
+         .btn-delete-3d {
+             position: relative;
+             background-image: linear-gradient(135deg, rgba(244, 63, 94, 0.15), rgba(244, 63, 94, 0.05)), url('/images/button-bg.png');
+             background-size: cover;
+             background-position: center;
+             transition: all 0.2s ease;
+             transform: translateZ(15px);
+             border: 1px solid rgba(244, 63, 94, 0.2);
+         }
+         .btn-delete-3d:hover {
+             transform: translateZ(30px) scale(1.25);
+             background-image: linear-gradient(135deg, rgba(244, 63, 94, 0.8), rgba(225, 29, 72, 0.8)), url('/images/button-bg.png');
+             color: white;
+             border-color: rgba(244, 63, 94, 0.5);
+             box-shadow: 0 0 15px rgba(244, 63, 94, 0.6);
+         }
+         .btn-delete-3d:focus-visible {
+             outline: 2px solid #f43f5e;
+             outline-offset: 2px;
+             color: #f43f5e;
+         }
+
+         /* Modal Confirm Button */
+         #confirmDelete {
+             background-image: linear-gradient(135deg, rgba(244, 63, 94, 0.9) 0%, rgba(220, 38, 38, 0.9) 100%), url('/images/button-bg.png');
+             background-size: cover;
+             background-position: center;
+             border: 1px solid rgba(255, 255, 255, 0.1);
+             box-shadow: 
+                 0 4px 0 #991b1b,
+                 0 8px 25px rgba(244, 63, 94, 0.4);
+             transition: all 0.2s ease, transform 0.1s ease;
+         }
+         #confirmDelete:hover {
+             transform: scale(1.05);
+             box-shadow: 
+                 0 6px 0 #991b1b,
+                 0 12px 30px rgba(244, 63, 94, 0.6);
+         }
+         #confirmDelete:active {
+             transform: translateY(4px);
+             box-shadow: 
+                 0 0px 0 #991b1b,
+                 0 4px 15px rgba(244, 63, 94, 0.3);
+         }
+
+         /* Modal Cancel Button */
+         #cancelDelete {
+             background-image: linear-gradient(135deg, rgba(51, 65, 85, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%), url('/images/button-bg.png');
+             background-size: cover;
+             background-position: center;
+             border: 1px solid rgba(255, 255, 255, 0.08);
+             box-shadow: 
+                 0 4px 0 #0f172a,
+                 0 8px 25px rgba(15, 23, 42, 0.4);
+             transition: all 0.2s ease, transform 0.1s ease;
+         }
+         #cancelDelete:hover {
+             transform: scale(1.05);
+             box-shadow: 
+                 0 6px 0 #0f172a,
+                 0 12px 30px rgba(15, 23, 42, 0.6);
+         }
+         #cancelDelete:active {
+             transform: translateY(4px);
+             box-shadow: 
+                 0 0px 0 #0f172a,
+                 0 4px 15px rgba(15, 23, 42, 0.3);
+         }
+
+         /* Filter Buttons */
+         .btn-filter {
+             background-size: cover;
+             background-position: center;
+             transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+             border-radius: 9999px;
+         }
+         
+         .btn-filter-inactive {
+             background-image: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.7) 100%), url('/images/button-bg.png');
+             color: #94a3b8;
+             border: 1px solid rgba(255, 255, 255, 0.05);
+         }
+         .btn-filter-inactive:hover {
+             background-image: linear-gradient(135deg, rgba(51, 65, 85, 0.8) 0%, rgba(30, 41, 59, 0.8) 100%), url('/images/button-bg.png');
+             color: #f1f5f9;
+             border-color: rgba(255, 255, 255, 0.15);
+             box-shadow: 0 0 15px rgba(139, 92, 246, 0.15);
+             transform: translateY(-2px);
+         }
+         
+         .btn-filter-active {
+             background-image: linear-gradient(135deg, rgba(168, 85, 247, 0.9) 0%, rgba(79, 70, 229, 0.9) 100%), url('/images/button-bg.png');
+             color: white;
+             border: 1px solid rgba(168, 85, 247, 0.4);
+             box-shadow: 
+                 0 4px 15px rgba(168, 85, 247, 0.4),
+                 inset 0 1px 0 rgba(255, 255, 255, 0.2);
+             transform: translateY(-2px) scale(1.05);
+         }
+
+         /* Pagination Buttons */
+         .btn-pagination {
+             background-image: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.8) 100%), url('/images/button-bg.png');
+             background-size: cover;
+             background-position: center;
+             border: 1px solid rgba(255, 255, 255, 0.05);
+             color: #cbd5e1;
+             transition: all 0.2s ease;
+         }
+         .btn-pagination:hover:not(.opacity-40) {
+             background-image: linear-gradient(135deg, rgba(51, 65, 85, 0.9) 0%, rgba(30, 41, 59, 0.9) 100%), url('/images/button-bg.png');
+             color: white;
+             border-color: rgba(255, 255, 255, 0.15);
+             transform: translateY(-1px);
+         }
+         .btn-pagination:active:not(.opacity-40) {
+             transform: translateY(1px);
+         }
+ 
+         /* 3D Inputs */
+         .input-3d {
+             background: rgba(15, 23, 42, 0.65);
+             border: 1px solid rgba(255, 255, 255, 0.08);
+             color: white;
+             border-radius: 12px;
+             box-shadow: inset 0 4px 8px rgba(0, 0, 0, 0.6);
+             transition: all 0.3s ease;
+         }
+ 
+         .input-3d:focus {
+             outline: none;
+             border-color: #a855f7;
+             box-shadow: 
+                 inset 0 4px 8px rgba(0, 0, 0, 0.6),
+                 0 0 20px rgba(168, 85, 247, 0.4);
+             background: rgba(15, 23, 42, 0.85);
+         }
+ 
+         .input-3d:focus-visible {
+             outline: 2px solid #a855f7;
+             outline-offset: 2px;
+         }
+
+        /* Glowing category indicators (Dynamic Illusions) */
+        .category-glow-Food { box-shadow: 0 0 15px rgba(59, 130, 246, 0.6); border-color: #3b82f6; }
+        .category-glow-Education { box-shadow: 0 0 15px rgba(16, 185, 129, 0.6); border-color: #10b981; }
+        .category-glow-Technology { box-shadow: 0 0 15px rgba(139, 92, 246, 0.6); border-color: #8b5cf6; }
+        .category-glow-Entertainment { box-shadow: 0 0 15px rgba(245, 158, 11, 0.6); border-color: #f59e0b; }
+        .category-glow-Other { box-shadow: 0 0 15px rgba(148, 163, 184, 0.6); border-color: #94a3b8; }
+
+        /* Floating effect */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-8px) rotate(0.3deg); }
+            100% { transform: translateY(0px) rotate(0deg); }
+        }
+
+        .float-animation {
+            animation: float 6s ease-in-out infinite;
+        }
+
+        @keyframes scaleUp {
+            from { transform: scale(0.95); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body class="text-slate-100 min-h-screen flex items-center justify-center p-4 md:p-8">
+
+    <!-- Ethereal Shadows Background -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <!-- Liquid Fluid SVG Shadow Layer -->
+        <div id="liquid-shadow" class="absolute inset-[-50px]" style="filter: url(#ethereal-filter) blur(4px);">
+            <div style="background-color: rgba(139, 92, 246, 0.4); mask-image: url('https://framerusercontent.com/images/ceBGguIpUU8luwByxuQz79t7To.png'); mask-size: cover; mask-repeat: no-repeat; mask-position: center; width: 100%; height: 100%;"></div>
+        </div>
+        
+        <!-- Noise Texture Overlay -->
+        <div class="absolute inset-0 opacity-[0.04]" style="background-image: url('https://framerusercontent.com/images/g0QcWrxr87K0ufOxIUFBakwYA8.png'); background-size: 200px; background-repeat: repeat;"></div>
+    </div>
+
+    <!-- Hidden SVG Filter Definition -->
+    <svg style="position: absolute; width: 0; height: 0; overflow: hidden;" aria-hidden="true">
+        <defs>
+            <filter id="ethereal-filter">
+                <feTurbulence
+                    id="turbulence"
+                    result="undulation"
+                    numOctaves="2"
+                    baseFrequency="0.001,0.004"
+                    seed="0"
+                    type="turbulence"
+                />
+                <feColorMatrix
+                    id="colorMatrix"
+                    in="undulation"
+                    type="hueRotate"
+                    values="0"
+                />
+                <feColorMatrix
+                    in="dist"
+                    result="circulation"
+                    type="matrix"
+                    values="4 0 0 0 1  4 0 0 0 1  4 0 0 0 1  1 0 0 0 0"
+                />
+                <feDisplacementMap
+                    in="SourceGraphic"
+                    in2="circulation"
+                    scale="50"
+                    result="dist"
+                />
+                <feDisplacementMap
+                    in="dist"
+                    in2="undulation"
+                    scale="50"
+                    result="output"
+                />
+            </filter>
+        </defs>
+    </svg>
+
+    <div class="max-w-6xl w-full mx-auto space-y-8 relative z-10">
+        
+        <!-- App Header -->
+        <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between px-2 gap-4">
+            <div>
+                <h1 class="text-4.5xl font-black tracking-tight bg-gradient-to-r from-pink-400 via-purple-400 to-cyan-400 bg-clip-text text-transparent">
+                    Ravi's Expense Tracker
+                </h1>
+                <p class="text-slate-400 mt-1 font-semibold text-sm">Good for Money Track !</p>
+            </div>
+            <!-- Live Status Indicator -->
+            <div class="flex items-center gap-2 self-start sm:self-auto bg-slate-900/60 backdrop-blur-md px-3.5 py-1.5 rounded-full border border-slate-800/60 text-[11px] font-bold text-slate-300">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+                <span>Live Database Connected</span>
+            </div>
+        </header>
+
+        <!-- Validation Error Alert Banner -->
+        <% if (errors && errors.length > 0) { %>
+            <section class="bg-rose-950/40 backdrop-blur border border-rose-800/50 p-4 rounded-2xl mb-6 flex gap-3 animate-pulse">
+                <div class="text-rose-400 text-xl font-bold mt-0.5">⚠️</div>
+                <div>
+                    <p class="font-extrabold text-rose-300 text-sm">Please correct the following errors:</p>
+                    <ul class="list-disc list-inside text-rose-400/90 text-xs mt-1 space-y-0.5">
+                        <% errors.forEach(err => { %>
+                            <li><%= err %></li>
+                        <% }) %>
+                    </ul>
+                </div>
+            </section>
+        <% } %>
+
+        <!-- Metrics Strip (Top-Level Summary Board) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Metric 1: Total Outflow -->
+            <div class="card-3d p-6 flex flex-col justify-between min-h-[130px]" data-tilt>
+                <div class="flex justify-between items-start depth-title">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Outflow</span>
+                    <span class="text-xl">💳</span>
+                </div>
+                <div class="depth-content mt-4">
+                    <h3 class="text-3xl font-black bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+                        ₹<%= totalSpent %>
+                    </h3>
+                    <p class="text-[10px] text-slate-400 mt-1 font-medium">Cumulative expense total</p>
+                </div>
+            </div>
+
+            <!-- Metric 2: Average Outflow -->
+            <div class="card-3d p-6 flex flex-col justify-between min-h-[130px]" data-tilt>
+                <div class="flex justify-between items-start depth-title">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Average Outflow</span>
+                    <span class="text-xl">📈</span>
+                </div>
+                <div class="depth-content mt-4">
+                    <h3 class="text-3xl font-black text-cyan-400">
+                        ₹<%= totalCount > 0 ? (totalSpent / totalCount).toFixed(2) : '0.00' %>
+                    </h3>
+                    <p class="text-[10px] text-slate-400 mt-1 font-medium">Average spent per item</p>
+                </div>
+            </div>
+
+            <!-- Metric 3: Peak Outflow -->
+            <div class="card-3d p-6 flex flex-col justify-between min-h-[130px]" data-tilt>
+                <div class="flex justify-between items-start depth-title">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Peak Expense</span>
+                    <span class="text-xl">🔥</span>
+                </div>
+                <div class="depth-content mt-4">
+                    <h3 class="text-2xl font-black text-pink-400 truncate max-w-full">
+                        ₹<%= highestExpense %>
+                    </h3>
+                    <p class="text-[10px] text-slate-400 mt-1 font-medium truncate">Item: <span class="text-slate-300 font-bold"><%= highestExpenseName %></span></p>
+                </div>
+            </div>
+
+            <!-- Metric 4: Transaction Count -->
+            <div class="card-3d p-6 flex flex-col justify-between min-h-[130px]" data-tilt>
+                <div class="flex justify-between items-start depth-title">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Transactions</span>
+                    <span class="text-xl">📊</span>
+                </div>
+                <div class="depth-content mt-4">
+                    <h3 class="text-3xl font-black text-slate-100">
+                        <%= totalCount %>
+                    </h3>
+                    <p class="text-[10px] text-slate-400 mt-1 font-medium">Total items matching filters</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Main Dashboard Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            
+            <!-- Left 2 Columns: Transaction Logging & Filters -->
+            <main class="lg:col-span-2 space-y-8">
+                
+                <!-- Add Expense Form -->
+                <section class="card-3d p-8" data-tilt>
+                    <h2 class="text-2xl font-bold mb-6 text-slate-100 depth-title">Log New Expense</h2>
+                    
+                    <% 
+                    const icons = {
+                        'Food': '🍕',
+                        'Education': '🎓',
+                        'Technology': '💻',
+                        'Entertainment': '🍿',
+                        'Other': '🏷️'
+                    };
+                    const glows = {
+                        'Food': 'from-rose-500/10 to-rose-500/2 border-rose-500/20 text-rose-400',
+                        'Education': 'from-emerald-500/10 to-emerald-500/2 border-emerald-500/20 text-emerald-400',
+                        'Technology': 'from-indigo-500/10 to-indigo-500/2 border-indigo-500/20 text-indigo-400',
+                        'Entertainment': 'from-amber-500/10 to-amber-500/2 border-amber-500/20 text-amber-400',
+                        'Other': 'from-cyan-500/10 to-cyan-500/2 border-cyan-500/20 text-cyan-400'
+                    };
+                    %>
+
+                    <form id="addExpenseForm" action="/add" method="POST" class="grid grid-cols-1 md:grid-cols-4 gap-6 depth-content">
+                        <!-- Description Input -->
+                        <div class="md:col-span-2">
+                            <label for="descriptionInput" class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Description</label>
+                            <input type="text" id="descriptionInput" name="description" placeholder="What did you spend on?" required 
+                                   class="w-full p-3 input-3d text-sm font-medium">
+                        </div>
+
+                        <!-- Amount Input -->
+                        <div class="md:col-span-2">
+                            <label for="amountInput" class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Amount (₹)</label>
+                            <input type="number" id="amountInput" name="amount" min="0.01" step="0.01" placeholder="0.00" required 
+                                   class="w-full p-3 input-3d text-sm font-semibold text-slate-100">
+                        </div>
+
+                        <!-- Custom Radio-pills Category Selection -->
+                        <div class="md:col-span-4">
+                            <span class="block text-xs font-bold text-slate-400 mb-2.5 uppercase tracking-wider">Category</span>
+                            <div class="grid grid-cols-2 sm:grid-cols-5 gap-3">
+                                <% ['Food', 'Education', 'Technology', 'Entertainment', 'Other'].forEach(cat => { %>
+                                    <label class="cursor-pointer">
+                                        <input type="radio" name="category" value="<%= cat %>" class="sr-only peer" <%= cat === 'Food' ? 'checked' : '' %>>
+                                        <div class="p-3 text-center border border-slate-800/80 rounded-xl bg-slate-950/45 text-xs font-extrabold text-slate-400 peer-checked:border-purple-500/60 peer-checked:bg-purple-500/10 peer-checked:text-purple-300 transition-all duration-300 hover:border-slate-700 hover:bg-slate-900/30">
+                                            <span class="block text-xl mb-1"><%= icons[cat] %></span>
+                                            <%= cat %>
+                                        </div>
+                                    </label>
+                                <% }) %>
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <div class="md:col-span-4 flex justify-end mt-2">
+                            <button type="submit" class="btn-3d px-10 py-3 text-sm flex items-center gap-2">
+                                <span>Add Transaction</span>
+                                <span class="text-base">🚀</span>
+                            </button>
+                        </div>
+                    </form>
+                </section>
+
+                <!-- Filter & Search Panel -->
+                <section class="card-3d p-6" data-tilt>
+                    <div class="depth-content">
+                        <form id="filterForm" action="/" method="GET" class="space-y-4">
+                            <input type="hidden" id="categoryFilterInput" name="category" value="<%= filters.category %>">
+                            
+                            <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                                <!-- Search Box -->
+                                <div class="relative w-full sm:w-80">
+                                    <label for="search" class="sr-only">Search</label>
+                                    <input type="text" id="search" name="search" value="<%= filters.search %>" placeholder="Search transactions..."
+                                           class="w-full pl-4 pr-10 py-2.5 input-3d text-sm">
+                                    <button type="submit" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors">
+                                        🔍
+                                    </button>
+                                </div>
+                                
+                                <!-- Reset controls -->
+                                <% if (filters.search || filters.category !== 'All') { %>
+                                    <a href="/" class="text-xs font-bold text-rose-400 hover:text-rose-300 border border-rose-800/40 bg-rose-950/20 hover:bg-rose-900/35 px-4 py-2 rounded-xl transition-all duration-200 active:scale-95">
+                                        Reset Filters
+                                    </a>
+                                <% } %>
+                            </div>
+
+                            <!-- Interactive Category Pill Filters -->
+                            <div class="border-t border-slate-800/40 pt-4 mt-2">
+                                <span class="block text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-2">Category Filters</span>
+                                <div class="flex flex-wrap gap-2">
+                                    <% ['All', 'Food', 'Education', 'Technology', 'Entertainment', 'Other'].forEach(cat => { %>
+                                        <button type="button" onclick="selectCategoryFilter('<%= cat %>')" 
+                                                class="btn-filter px-4 py-1.5 text-xs font-bold <%= filters.category === cat ? 'btn-filter-active' : 'btn-filter-inactive' %>">
+                                            <%= cat === 'All' ? '🌐 All Categories' : (icons[cat] + ' ' + cat) %>
+                                        </button>
+                                    <% }) %>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </section>
+            </main>
+
+            <!-- Right Column: Visual Charts & Transaction Feeds -->
+            <aside class="space-y-8">
+                <!-- Analytics Card -->
+                <div class="card-3d p-8 float-animation flex flex-col justify-between" data-tilt>
+                    <div class="w-full text-center depth-title border-b border-slate-800/40 pb-4 mb-4">
+                        <h3 class="text-lg font-extrabold text-slate-100 tracking-wider">Analytics Breakdown</h3>
+                    </div>
+                    
+                    <div class="relative w-full aspect-square max-w-[200px] mx-auto my-4 depth-content">
+                        <canvas id="expenseChart" aria-label="Transaction division breakdown chart"></canvas>
+                    </div>
+
+                    <!-- Interactive Percentage Bars Legend -->
+                    <div class="space-y-3 mt-6 depth-content">
+                        <% 
+                        const colors = {
+                            'Food': 'bg-rose-500',
+                            'Education': 'bg-emerald-500',
+                            'Technology': 'bg-indigo-500',
+                            'Entertainment': 'bg-amber-500',
+                            'Other': 'bg-cyan-500'
+                        };
+                        Object.keys(chartData).forEach(cat => {
+                            const amount = chartData[cat];
+                            const percentage = totalSpent > 0 ? Math.round((amount / totalSpent) * 100) : 0;
+                        %>
+                            <div class="flex flex-col space-y-1">
+                                <div class="flex justify-between items-center text-[11px]">
+                                    <div class="flex items-center gap-2 text-slate-300">
+                                        <span class="w-2 h-2 rounded-full <%= colors[cat] %>"></span>
+                                        <span class="font-bold"><%= cat %></span>
+                                    </div>
+                                    <div class="text-slate-400 font-extrabold">
+                                        ₹<%= amount %> <span class="text-[9px] opacity-60 ml-1 font-semibold">(<%= percentage %>%)</span>
+                                    </div>
+                                </div>
+                                <div class="w-full bg-slate-950/60 h-1.5 rounded-full overflow-hidden border border-slate-900">
+                                    <div class="h-full <%= colors[cat] %> rounded-full" style="width: <%= percentage %>%"></div>
+                                </div>
+                            </div>
+                        <% }) %>
+                    </div>
+                </div>
+
+                <!-- Monthly Budget Tracker Card -->
+                <div class="card-3d p-6 space-y-4" data-tilt>
+                    <div class="flex justify-between items-center depth-title border-b border-slate-800/40 pb-3">
+                        <h3 class="text-xs font-extrabold text-slate-100 tracking-wider">Monthly Budget Tracker</h3>
+                        <button onclick="editBudget()" class="text-[10px] bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/20 text-purple-300 px-2 py-1 rounded-md font-bold transition-all duration-200">
+                            Set Target ⚙️
+                        </button>
+                    </div>
+                    <div class="depth-content space-y-3">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-xs text-slate-400 font-semibold">Total Spent:</span>
+                            <span class="text-base font-black text-slate-100">₹<%= totalSpent %></span>
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-xs text-slate-400 font-semibold">Target Budget:</span>
+                            <span id="budgetValueDisplay" class="text-base font-black text-purple-400">₹15,000</span>
+                        </div>
+                        
+                        <!-- Progress Bar Container -->
+                        <div class="space-y-1.5 pt-1">
+                            <div class="flex justify-between text-[9px] font-bold">
+                                <span id="budgetPercentLabel" class="text-slate-400">0% Used</span>
+                                <span id="budgetStatusLabel" class="text-emerald-400">Within Budget ✓</span>
+                            </div>
+                            <div class="w-full bg-slate-950/60 h-2 rounded-full overflow-hidden border border-slate-900">
+                                <div id="budgetProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Expense List -->
+                <section class="card-3d p-6 flex flex-col justify-between" data-tilt>
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-800/40 pb-3">
+                        <h3 class="text-xl font-bold text-slate-100 depth-title">Feed</h3>
+                        <div class="flex gap-2">
+                            <button onclick="exportToCSV()" class="btn-pagination px-3 py-1 rounded-lg text-[10px] font-bold" title="Export Current List to CSV">
+                                CSV 📥
+                            </button>
+                            <button onclick="exportToJSON()" class="btn-pagination px-3 py-1 rounded-lg text-[10px] font-bold" title="Export Current List to JSON">
+                                JSON 📥
+                            </button>
+                        </div>
+                    </div>
+                    <div class="space-y-3.5 max-h-[350px] overflow-y-auto pr-1 depth-content">
+                        <% if (expenses.length > 0) { %>
+                            <% expenses.forEach(expense => { %>
+                                <div class="flex justify-between items-center p-3.5 bg-slate-900/35 hover:bg-slate-900/60 rounded-2xl border border-slate-800/40 hover:border-purple-500/30 transition-all duration-300 shadow-sm">
+                                    <div class="flex items-center gap-3.5 min-w-0">
+                                        <div class="w-10 h-10 rounded-xl bg-gradient-to-br <%= glows[expense.category] %> flex items-center justify-center text-lg border shrink-0">
+                                            <%= icons[expense.category] || '🏷️' %>
+                                        </div>
+                                        <div class="min-w-0">
+                                            <p class="font-extrabold text-slate-100 text-xs tracking-wide truncate"><%= expense.description %></p>
+                                            <p class="text-[10px] text-slate-400 mt-0.5 font-medium"><%= expense.category %> • <%= expense.date.toDateString() %></p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center gap-4 shrink-0">
+                                        <span class="font-black text-slate-100 text-sm">₹<%= expense.amount %></span>
+                                        <div class="flex items-center gap-2">
+                                            <!-- Edit Action -->
+                                            <button onclick="openEditModal('<%= expense._id %>', '<%= expense.description.replace(/'/g, "\\'") %>', <%= expense.amount %>, '<%= expense.category %>')" 
+                                                    class="btn-delete-3d text-slate-500 hover:text-purple-400 font-black text-xs p-1.5 bg-slate-950/40 hover:bg-purple-500/10 border border-slate-800 hover:border-purple-500/20 rounded-lg transition-all duration-200" 
+                                                    aria-label="Edit outflow: <%= expense.description %>">
+                                                ✏️
+                                            </button>
+                                            <!-- Delete Action -->
+                                            <form action="/delete/<%= expense._id %>?_method=DELETE" method="POST" class="inline">
+                                                <button type="submit" class="btn-delete-3d text-slate-500 hover:text-rose-500 font-black text-xs p-1.5 bg-slate-950/40 hover:bg-rose-500/10 border border-slate-800 hover:border-rose-500/20 rounded-lg transition-all duration-200" aria-label="Delete outflow: <%= expense.description %>">
+                                                    ✕
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            <% }) %>
+                        <% } else { %>
+                            <div class="text-center py-12 text-slate-500">
+                                <p class="text-base font-semibold">No transactions found.</p>
+                                <p class="text-xs mt-1 text-slate-400">Try updating filters or log a new transaction.</p>
+                            </div>
+                        <% } %>
+                    </div>
+
+                    <!-- Pagination UI Controls -->
+                    <% if (totalPages > 1) { %>
+                        <div class="flex justify-between items-center mt-5 pt-4 border-t border-slate-800/40 depth-content">
+                            <a href="/?page=<%= page - 1 %><%= filters.search ? '&search=' + encodeURIComponent(filters.search) : '' %><%= filters.category ? '&category=' + encodeURIComponent(filters.category) : '' %>"
+                               class="btn-pagination px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 <%= page === 1 ? 'pointer-events-none opacity-40' : '' %>">
+                                ← Prev
+                            </a>
+                            <span class="text-[10px] text-slate-400 font-semibold">
+                                <%= page %> / <%= totalPages %>
+                            </span>
+                            <a href="/?page=<%= page + 1 %><%= filters.search ? '&search=' + encodeURIComponent(filters.search) : '' %><%= filters.category ? '&category=' + encodeURIComponent(filters.category) : '' %>"
+                               class="btn-pagination px-3.5 py-1.5 text-xs font-bold rounded-xl transition-all duration-200 <%= page === totalPages ? 'pointer-events-none opacity-40' : '' %>">
+                                Next →
+                            </a>
+                        </div>
+                    <% } %>
+                </section>
+            </aside>
+        </div>
+    </div>
+
+    <!-- Modern 3D Confirmation Delete Modal -->
+    <div id="deleteModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center z-50 p-4 transition-all duration-300" role="dialog" aria-modal="true" aria-labelledby="modalTitle" aria-describedby="modalDesc">
+        <div class="card-3d max-w-sm w-full p-8 text-center animate-[scaleUp_0.2s_ease-out]" data-tilt>
+            <div class="w-16 h-16 bg-rose-500/10 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-500/20 text-3xl">
+                🗑️
+            </div>
+            <h4 id="modalTitle" class="text-xl font-black text-slate-100 mb-2">Delete Outflow?</h4>
+            <p id="modalDesc" class="text-slate-400 text-sm mb-6">Are you sure you want to remove this transaction? This action is irreversible.</p>
+            <div class="flex gap-4">
+                <button id="cancelDelete" class="flex-1 text-slate-300 font-semibold py-2.5 rounded-xl text-sm transition-all duration-200">
+                    Cancel
+                </button>
+                <button id="confirmDelete" class="flex-1 text-white font-semibold py-2.5 rounded-xl text-sm transition-all duration-200">
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modern 3D Edit Modal -->
+    <div id="editModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center z-50 p-4 transition-all duration-300" role="dialog" aria-modal="true" aria-labelledby="editModalTitle">
+        <div class="card-3d max-w-sm w-full p-8 animate-[scaleUp_0.2s_ease-out]" data-tilt>
+            <h4 id="editModalTitle" class="text-xl font-black text-slate-100 mb-6 border-b border-slate-800/40 pb-3 depth-title">Edit Outflow</h4>
+            <form id="editExpenseForm" action="" method="POST" class="space-y-5 depth-content text-left">
+                <!-- Description Input -->
+                <div>
+                    <label for="editDescriptionInput" class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Description</label>
+                    <input type="text" id="editDescriptionInput" name="description" required 
+                           class="w-full p-3 input-3d text-sm font-medium">
+                </div>
+
+                <!-- Amount Input -->
+                <div>
+                    <label for="editAmountInput" class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Amount (₹)</label>
+                    <input type="number" id="editAmountInput" name="amount" min="0.01" step="0.01" required 
+                           class="w-full p-3 input-3d text-sm font-semibold text-slate-100">
+                </div>
+
+                <!-- Category Input selection -->
+                <div>
+                    <label for="editCategorySelect" class="block text-xs font-bold text-slate-400 mb-2 uppercase tracking-wider">Category</label>
+                    <select id="editCategorySelect" name="category" required 
+                            class="w-full p-3 input-3d text-sm font-semibold text-slate-100 bg-slate-950">
+                        <option value="Food">🍕 Food</option>
+                        <option value="Education">🎓 Education</option>
+                        <option value="Technology">💻 Technology</option>
+                        <option value="Entertainment">🍿 Entertainment</option>
+                        <option value="Other">🏷️ Other</option>
+                    </select>
+                </div>
+
+                <div class="flex gap-4 pt-4">
+                    <button type="button" id="cancelEdit" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold py-2.5 rounded-xl text-sm transition-all duration-200 active:scale-95">
+                        Cancel
+                    </button>
+                    <button type="submit" class="flex-1 btn-3d text-white font-semibold py-2.5 rounded-xl text-sm transition-all duration-200">
+                        Save Changes
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Chart.js & Interactive 3D / Chameleon effect script -->
+    <script>
+        // Inject aggregated data
+        const chartData = <%- JSON.stringify(chartData) %>;
+        const rawExpenses = <%- JSON.stringify(expenses) %>;
+        
+        // Custom plugin to render text inside doughnut cutout
+        const centerTextPlugin = {
+            id: 'centerText',
+            beforeDraw(chart) {
+                const { ctx, width, height } = chart;
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                ctx.font = 'bold 9px "Outfit", sans-serif';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText('OUTFLOW', width / 2, height / 2 - 10);
+                
+                const totalText = '₹' + (<%= totalSpent %>).toLocaleString('en-IN');
+                ctx.font = '900 16px "Outfit", sans-serif';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText(totalText, width / 2, height / 2 + 10);
+                
+                ctx.restore();
+            }
+        };
+
+        // Render Chart.js
+        const ctx = document.getElementById('expenseChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'doughnut',
+            plugins: [centerTextPlugin],
+            data: {
+                labels: Object.keys(chartData),
+                datasets: [{
+                    data: Object.values(chartData),
+                    backgroundColor: [
+                        '#f43f5e', // Rose/Pink (Food)
+                        '#10b981', // Green (Education)
+                        '#8b5cf6', // Purple (Technology)
+                        '#f59e0b', // Yellow (Entertainment)
+                        '#06b6d4'  // Cyan (Other)
+                    ],
+                    borderWidth: 0,
+                    hoverOffset: 12
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false }
+                },
+                cutout: '75%',
+                animation: {
+                    animateScale: true,
+                    animateRotate: true
+                }
+            }
+        });
+
+        // Data Exporters
+        function exportToCSV() {
+            if (!rawExpenses || rawExpenses.length === 0) {
+                alert("No transactions available to export.");
+                return;
+            }
+            const headers = ["Description", "Amount (₹)", "Category", "Date"];
+            const rows = rawExpenses.map(exp => [
+                `"${exp.description.replace(/"/g, '""')}"`,
+                exp.amount,
+                `"${exp.category}"`,
+                `"${new Date(exp.date).toLocaleDateString()}"`
+            ]);
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+                + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `expenses_export_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportToJSON() {
+            if (!rawExpenses || rawExpenses.length === 0) {
+                alert("No transactions available to export.");
+                return;
+            }
+            const cleanedExpenses = rawExpenses.map(({ description, amount, category, date }) => ({
+                description,
+                amount,
+                category,
+                date
+            }));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cleanedExpenses, null, 2));
+            const link = document.createElement("a");
+            link.setAttribute("href", dataStr);
+            link.setAttribute("download", `expenses_export_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Budget management logic
+        let monthlyBudget = parseFloat(localStorage.getItem('monthlyBudget')) || 15000;
+        const totalSpent = <%= totalSpent %>;
+
+        const updateBudgetUI = () => {
+            const budgetValDisplay = document.getElementById('budgetValueDisplay');
+            const percentLabel = document.getElementById('budgetPercentLabel');
+            const statusLabel = document.getElementById('budgetStatusLabel');
+            const progressBar = document.getElementById('budgetProgressBar');
+
+            if (budgetValDisplay) {
+                budgetValDisplay.innerText = `₹${monthlyBudget.toLocaleString('en-IN')}`;
+            }
+
+            const percent = monthlyBudget > 0 ? Math.min(Math.round((totalSpent / monthlyBudget) * 100), 100) : 100;
+            if (percentLabel) {
+                percentLabel.innerText = `${percent}% Used`;
+            }
+
+            if (progressBar) {
+                progressBar.style.width = `${percent}%`;
+                
+                if (percent >= 100) {
+                    progressBar.className = "h-full bg-gradient-to-r from-rose-500 to-red-600 rounded-full transition-all duration-500";
+                    if (statusLabel) {
+                        statusLabel.innerText = "Over Budget! 🚨";
+                        statusLabel.className = "text-rose-400 font-extrabold";
+                    }
+                } else if (percent >= 85) {
+                    progressBar.className = "h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500";
+                    if (statusLabel) {
+                        statusLabel.innerText = "Approaching Limit ⚠️";
+                        statusLabel.className = "text-amber-400 font-extrabold";
+                    }
+                } else {
+                    progressBar.className = "h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500";
+                    if (statusLabel) {
+                        statusLabel.innerText = "Within Budget ✓";
+                        statusLabel.className = "text-emerald-400 font-bold";
+                    }
+                }
+            }
+        };
+
+        window.editBudget = () => {
+            const newBudget = prompt("Set your monthly budget limit (₹):", monthlyBudget);
+            if (newBudget !== null) {
+                const parsed = parseFloat(newBudget);
+                if (!isNaN(parsed) && parsed > 0) {
+                    monthlyBudget = parsed;
+                    localStorage.setItem('monthlyBudget', monthlyBudget);
+                    updateBudgetUI();
+                } else {
+                    alert("Please enter a valid positive number.");
+                }
+            }
+        };
+
+        // Initialize budget UI on load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateBudgetUI();
+        });
+
+        // Background illusion mouse movement (Performance optimized using requestAnimationFrame)
+        let ticking = false;
+        document.addEventListener('mousemove', e => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    const w = window.innerWidth;
+                    const h = window.innerHeight;
+                    const xPercent = Math.round((e.clientX / w) * 100);
+                    const yPercent = Math.round((e.clientY / h) * 100);
+                    
+                    document.documentElement.style.setProperty('--light-x', `${xPercent}%`);
+                    document.documentElement.style.setProperty('--light-y', `${yPercent}%`);
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        });
+
+        // 3D Tilt & Iridescent reflection effect Javascript (Disabled for mobile/touch screens)
+        const isTouchDevice = () => {
+            return (('ontouchstart' in window) ||
+               (navigator.maxTouchPoints > 0) ||
+               (navigator.msMaxTouchPoints > 0));
+        };
+
+        if (!isTouchDevice()) {
+            const cards = document.querySelectorAll('[data-tilt]');
+            cards.forEach(card => {
+                card.addEventListener('mousemove', e => {
+                    const rect = card.getBoundingClientRect();
+                    const x = e.clientX - rect.left;
+                    const y = e.clientY - rect.top;
+                    
+                    card.style.setProperty('--mouse-x', `${x}px`);
+                    card.style.setProperty('--mouse-y', `${y}px`);
+
+                    const centerX = rect.width / 2;
+                    const centerY = rect.height / 2;
+                    
+                    const maxRotateX = 10;
+                    const maxRotateY = 10;
+                    
+                    const rotateX = ((centerY - y) / centerY) * maxRotateX;
+                    const rotateY = ((x - centerX) / centerX) * maxRotateY;
+                    
+                    card.style.transform = `rotateX(${rotateX}deg) rotateY(${rotateY}deg) translateY(-4px)`;
+                });
+
+                card.addEventListener('mouseleave', () => {
+                    card.style.transform = 'rotateX(0deg) rotateY(0deg) translateY(0px)';
+                });
+            });
+        }
+
+        // Delete Modal Handler Setup
+        let activeDeleteForm = null;
+        let lastFocusedElement = null; // Store element for focus restoration
+        const deleteModal = document.getElementById('deleteModal');
+        const cancelBtn = document.getElementById('cancelDelete');
+        const confirmBtn = document.getElementById('confirmDelete');
+
+        document.addEventListener('submit', e => {
+            // Listen for form submissions targeting deletion
+            if (e.target.action && e.target.action.includes('/delete/')) {
+                e.preventDefault();
+                activeDeleteForm = e.target;
+                lastFocusedElement = document.activeElement; // Track original focused button
+                
+                // Open confirmation dialog
+                deleteModal.classList.remove('hidden');
+                deleteModal.classList.add('flex');
+                
+                // Accessibly transfer focus
+                confirmBtn.focus();
+            }
+        });
+
+        const closeModal = () => {
+            deleteModal.classList.add('hidden');
+            deleteModal.classList.remove('flex');
+            activeDeleteForm = null;
+            if (lastFocusedElement) {
+                lastFocusedElement.focus(); // Restore focus
+                lastFocusedElement = null;
+            }
+        };
+
+        cancelBtn.addEventListener('click', closeModal);
+
+        confirmBtn.addEventListener('click', () => {
+            if (activeDeleteForm) {
+                activeDeleteForm.submit();
+            }
+        });
+
+        // Edit Modal Handler Setup
+        const editModal = document.getElementById('editModal');
+        const cancelEditBtn = document.getElementById('cancelEdit');
+        const editExpenseForm = document.getElementById('editExpenseForm');
+        const editDescriptionInput = document.getElementById('editDescriptionInput');
+        const editAmountInput = document.getElementById('editAmountInput');
+        const editCategorySelect = document.getElementById('editCategorySelect');
+
+        window.openEditModal = (id, description, amount, category) => {
+            lastFocusedElement = document.activeElement;
+            editExpenseForm.action = `/edit/${id}?_method=PUT`;
+            editDescriptionInput.value = description;
+            editAmountInput.value = amount;
+            editCategorySelect.value = category;
+
+            editModal.classList.remove('hidden');
+            editModal.classList.add('flex');
+            editDescriptionInput.focus();
+        };
+
+        const closeEditModal = () => {
+            editModal.classList.add('hidden');
+            editModal.classList.remove('flex');
+            if (lastFocusedElement) {
+                lastFocusedElement.focus();
+                lastFocusedElement = null;
+            }
+        };
+
+        cancelEditBtn.addEventListener('click', closeEditModal);
+
+        // Close modals on Escape keypress
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') {
+                if (!deleteModal.classList.contains('hidden')) {
+                    closeModal();
+                }
+                if (!editModal.classList.contains('hidden')) {
+                    closeEditModal();
+                }
+            }
+        });
+
+        // Double-submission safeguard for logger form
+        const addExpenseForm = document.getElementById('addExpenseForm');
+        if (addExpenseForm) {
+            addExpenseForm.addEventListener('submit', () => {
+                const submitBtn = addExpenseForm.querySelector('button[type="submit"]');
+                if (submitBtn) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML = '<span>Saving...</span><span class="text-base">⏳</span>';
+                }
+            });
+        }
+
+        // Animate the feColorMatrix hueRotate in the liquid background
+        const colorMatrix = document.getElementById('colorMatrix');
+        let hueVal = 0;
+        const animateLiquidShadow = () => {
+            hueVal = (hueVal + 0.15) % 360;
+            if (colorMatrix) {
+                colorMatrix.setAttribute('values', hueVal);
+            }
+            requestAnimationFrame(animateLiquidShadow);
+        };
+        animateLiquidShadow();
+        // Category Pill Filter handler
+        window.selectCategoryFilter = (category) => {
+            const hiddenInput = document.getElementById('categoryFilterInput');
+            if (hiddenInput) {
+                hiddenInput.value = category;
+                document.getElementById('filterForm').submit();
+            }
+        };
+    </script>
+</body>
+</html>
