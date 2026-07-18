@@ -372,7 +372,7 @@
         <% } %>
 
         <!-- Metrics Strip (Top-Level Summary Board) -->
-        <section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
             <!-- Metric 1: Total Outflow -->
             <div class="card-3d p-6 flex flex-col justify-between min-h-[130px]" data-tilt>
                 <div class="flex justify-between items-start depth-title">
@@ -380,24 +380,24 @@
                     <span class="text-xl">💳</span>
                 </div>
                 <div class="depth-content mt-4">
-                    <h3 class="text-4xl font-black bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
+                    <h3 class="text-3xl font-black bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">
                         ₹<%= totalSpent %>
                     </h3>
                     <p class="text-[10px] text-slate-400 mt-1 font-medium">Cumulative expense total</p>
                 </div>
             </div>
 
-            <!-- Metric 2: Transaction Count -->
+            <!-- Metric 2: Average Outflow -->
             <div class="card-3d p-6 flex flex-col justify-between min-h-[130px]" data-tilt>
                 <div class="flex justify-between items-start depth-title">
-                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Transactions</span>
-                    <span class="text-xl">📊</span>
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Average Outflow</span>
+                    <span class="text-xl">📈</span>
                 </div>
                 <div class="depth-content mt-4">
-                    <h3 class="text-4xl font-black text-slate-100">
-                        <%= totalCount %>
+                    <h3 class="text-3xl font-black text-cyan-400">
+                        ₹<%= totalCount > 0 ? (totalSpent / totalCount).toFixed(2) : '0.00' %>
                     </h3>
-                    <p class="text-[10px] text-slate-400 mt-1 font-medium">Total items matching filters</p>
+                    <p class="text-[10px] text-slate-400 mt-1 font-medium">Average spent per item</p>
                 </div>
             </div>
 
@@ -411,7 +411,21 @@
                     <h3 class="text-2xl font-black text-pink-400 truncate max-w-full">
                         ₹<%= highestExpense %>
                     </h3>
-                    <p class="text-[10px] text-slate-400 mt-1 font-medium truncate">Description: <span class="text-slate-300 font-bold"><%= highestExpenseName %></span></p>
+                    <p class="text-[10px] text-slate-400 mt-1 font-medium truncate">Item: <span class="text-slate-300 font-bold"><%= highestExpenseName %></span></p>
+                </div>
+            </div>
+
+            <!-- Metric 4: Transaction Count -->
+            <div class="card-3d p-6 flex flex-col justify-between min-h-[130px]" data-tilt>
+                <div class="flex justify-between items-start depth-title">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Transactions</span>
+                    <span class="text-xl">📊</span>
+                </div>
+                <div class="depth-content mt-4">
+                    <h3 class="text-3xl font-black text-slate-100">
+                        <%= totalCount %>
+                    </h3>
+                    <p class="text-[10px] text-slate-400 mt-1 font-medium">Total items matching filters</p>
                 </div>
             </div>
         </section>
@@ -570,9 +584,50 @@
                     </div>
                 </div>
 
+                <!-- Monthly Budget Tracker Card -->
+                <div class="card-3d p-6 space-y-4" data-tilt>
+                    <div class="flex justify-between items-center depth-title border-b border-slate-800/40 pb-3">
+                        <h3 class="text-xs font-extrabold text-slate-100 tracking-wider">Monthly Budget Tracker</h3>
+                        <button onclick="editBudget()" class="text-[10px] bg-purple-500/10 hover:bg-purple-500/25 border border-purple-500/20 text-purple-300 px-2 py-1 rounded-md font-bold transition-all duration-200">
+                            Set Target ⚙️
+                        </button>
+                    </div>
+                    <div class="depth-content space-y-3">
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-xs text-slate-400 font-semibold">Total Spent:</span>
+                            <span class="text-base font-black text-slate-100">₹<%= totalSpent %></span>
+                        </div>
+                        <div class="flex justify-between items-baseline">
+                            <span class="text-xs text-slate-400 font-semibold">Target Budget:</span>
+                            <span id="budgetValueDisplay" class="text-base font-black text-purple-400">₹15,000</span>
+                        </div>
+                        
+                        <!-- Progress Bar Container -->
+                        <div class="space-y-1.5 pt-1">
+                            <div class="flex justify-between text-[9px] font-bold">
+                                <span id="budgetPercentLabel" class="text-slate-400">0% Used</span>
+                                <span id="budgetStatusLabel" class="text-emerald-400">Within Budget ✓</span>
+                            </div>
+                            <div class="w-full bg-slate-950/60 h-2 rounded-full overflow-hidden border border-slate-900">
+                                <div id="budgetProgressBar" class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Expense List -->
                 <section class="card-3d p-6 flex flex-col justify-between" data-tilt>
-                    <h3 class="text-xl font-bold mb-4 text-slate-100 depth-title">Feed</h3>
+                    <div class="flex justify-between items-center mb-4 border-b border-slate-800/40 pb-3">
+                        <h3 class="text-xl font-bold text-slate-100 depth-title">Feed</h3>
+                        <div class="flex gap-2">
+                            <button onclick="exportToCSV()" class="btn-pagination px-3 py-1 rounded-lg text-[10px] font-bold" title="Export Current List to CSV">
+                                CSV 📥
+                            </button>
+                            <button onclick="exportToJSON()" class="btn-pagination px-3 py-1 rounded-lg text-[10px] font-bold" title="Export Current List to JSON">
+                                JSON 📥
+                            </button>
+                        </div>
+                    </div>
                     <div class="space-y-3.5 max-h-[350px] overflow-y-auto pr-1 depth-content">
                         <% if (expenses.length > 0) { %>
                             <% expenses.forEach(expense => { %>
@@ -648,11 +703,35 @@
     <script>
         // Inject aggregated data
         const chartData = <%- JSON.stringify(chartData) %>;
+        const rawExpenses = <%- JSON.stringify(expenses) %>;
         
+        // Custom plugin to render text inside doughnut cutout
+        const centerTextPlugin = {
+            id: 'centerText',
+            beforeDraw(chart) {
+                const { ctx, width, height } = chart;
+                ctx.save();
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                
+                ctx.font = 'bold 9px "Outfit", sans-serif';
+                ctx.fillStyle = '#94a3b8';
+                ctx.fillText('OUTFLOW', width / 2, height / 2 - 10);
+                
+                const totalText = '₹' + (<%= totalSpent %>).toLocaleString('en-IN');
+                ctx.font = '900 16px "Outfit", sans-serif';
+                ctx.fillStyle = '#f8fafc';
+                ctx.fillText(totalText, width / 2, height / 2 + 10);
+                
+                ctx.restore();
+            }
+        };
+
         // Render Chart.js
         const ctx = document.getElementById('expenseChart').getContext('2d');
         new Chart(ctx, {
             type: 'doughnut',
+            plugins: [centerTextPlugin],
             data: {
                 labels: Object.keys(chartData),
                 datasets: [{
@@ -680,6 +759,113 @@
                     animateRotate: true
                 }
             }
+        });
+
+        // Data Exporters
+        function exportToCSV() {
+            if (!rawExpenses || rawExpenses.length === 0) {
+                alert("No transactions available to export.");
+                return;
+            }
+            const headers = ["Description", "Amount (₹)", "Category", "Date"];
+            const rows = rawExpenses.map(exp => [
+                `"${exp.description.replace(/"/g, '""')}"`,
+                exp.amount,
+                `"${exp.category}"`,
+                `"${new Date(exp.date).toLocaleDateString()}"`
+            ]);
+            const csvContent = "data:text/csv;charset=utf-8,\uFEFF" 
+                + [headers.join(","), ...rows.map(e => e.join(","))].join("\n");
+            const encodedUri = encodeURI(csvContent);
+            const link = document.createElement("a");
+            link.setAttribute("href", encodedUri);
+            link.setAttribute("download", `expenses_export_${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        function exportToJSON() {
+            if (!rawExpenses || rawExpenses.length === 0) {
+                alert("No transactions available to export.");
+                return;
+            }
+            const cleanedExpenses = rawExpenses.map(({ description, amount, category, date }) => ({
+                description,
+                amount,
+                category,
+                date
+            }));
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(cleanedExpenses, null, 2));
+            const link = document.createElement("a");
+            link.setAttribute("href", dataStr);
+            link.setAttribute("download", `expenses_export_${new Date().toISOString().slice(0,10)}.json`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // Budget management logic
+        let monthlyBudget = parseFloat(localStorage.getItem('monthlyBudget')) || 15000;
+        const totalSpent = <%= totalSpent %>;
+
+        const updateBudgetUI = () => {
+            const budgetValDisplay = document.getElementById('budgetValueDisplay');
+            const percentLabel = document.getElementById('budgetPercentLabel');
+            const statusLabel = document.getElementById('budgetStatusLabel');
+            const progressBar = document.getElementById('budgetProgressBar');
+
+            if (budgetValDisplay) {
+                budgetValDisplay.innerText = `₹${monthlyBudget.toLocaleString('en-IN')}`;
+            }
+
+            const percent = monthlyBudget > 0 ? Math.min(Math.round((totalSpent / monthlyBudget) * 100), 100) : 100;
+            if (percentLabel) {
+                percentLabel.innerText = `${percent}% Used`;
+            }
+
+            if (progressBar) {
+                progressBar.style.width = `${percent}%`;
+                
+                if (percent >= 100) {
+                    progressBar.className = "h-full bg-gradient-to-r from-rose-500 to-red-600 rounded-full transition-all duration-500";
+                    if (statusLabel) {
+                        statusLabel.innerText = "Over Budget! 🚨";
+                        statusLabel.className = "text-rose-400 font-extrabold";
+                    }
+                } else if (percent >= 85) {
+                    progressBar.className = "h-full bg-gradient-to-r from-amber-500 to-orange-500 rounded-full transition-all duration-500";
+                    if (statusLabel) {
+                        statusLabel.innerText = "Approaching Limit ⚠️";
+                        statusLabel.className = "text-amber-400 font-extrabold";
+                    }
+                } else {
+                    progressBar.className = "h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full transition-all duration-500";
+                    if (statusLabel) {
+                        statusLabel.innerText = "Within Budget ✓";
+                        statusLabel.className = "text-emerald-400 font-bold";
+                    }
+                }
+            }
+        };
+
+        window.editBudget = () => {
+            const newBudget = prompt("Set your monthly budget limit (₹):", monthlyBudget);
+            if (newBudget !== null) {
+                const parsed = parseFloat(newBudget);
+                if (!isNaN(parsed) && parsed > 0) {
+                    monthlyBudget = parsed;
+                    localStorage.setItem('monthlyBudget', monthlyBudget);
+                    updateBudgetUI();
+                } else {
+                    alert("Please enter a valid positive number.");
+                }
+            }
+        };
+
+        // Initialize budget UI on load
+        document.addEventListener('DOMContentLoaded', () => {
+            updateBudgetUI();
         });
 
         // Background illusion mouse movement (Performance optimized using requestAnimationFrame)
